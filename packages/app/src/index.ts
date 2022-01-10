@@ -1,8 +1,11 @@
 import path from "path";
 import express, { Router } from "express";
+import { quote } from "@dev/api";
 
 export const router = Router()
-  .use("/api", (_req, res) => res.json({ hello: "Hello" }))
+  .use("/api/quote.json", (_req, res) =>
+    quote.find({}).then((results) => res.json({ results }))
+  )
   .use(require("./push").default());
 
 class Server {
