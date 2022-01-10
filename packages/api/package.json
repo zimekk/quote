@@ -9,6 +9,11 @@
   "files": [
     "lib/"
   ],
+  "eslintConfig": {
+    "env": {
+      "node": true
+    }
+  },
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "node"

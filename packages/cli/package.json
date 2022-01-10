@@ -13,6 +13,11 @@
   "bin": {
     "import": "bin/import.js"
   },
+  "eslintConfig": {
+    "env": {
+      "node": true
+    }
+  },
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "node"

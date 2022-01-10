@@ -14,6 +14,10 @@
       "node": true
     }
   },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node"
+  },
   "scripts": {
     "build": "webpack --mode production",
     "serve": "node -r dotenv/config lib dotenv_config_path=../../.env",

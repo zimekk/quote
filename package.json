@@ -9,6 +9,11 @@
     "node": "^12"
   },
   "eslintConfig": {
+    "env": {
+      "browser": true,
+      "jest/globals": true,
+      "node": true
+    },
     "extends": [
       "eslint:recommended",
       "plugin:react/recommended"
@@ -17,9 +22,13 @@
     "parser": "@typescript-eslint/parser",
     "plugins": [
       "@typescript-eslint",
+      "jest",
       "prettier"
     ],
     "settings": {
+      "jest": {
+        "version": 27
+      },
       "react": {
         "version": "detect"
       }

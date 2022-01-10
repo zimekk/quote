@@ -9,6 +9,10 @@
       "serviceworker": true
     }
   },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "jsdom"
+  },
   "scripts": {
     "build": "webpack --mode production",
     "serve": "serve -l 8080 public",
