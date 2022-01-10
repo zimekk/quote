@@ -70,11 +70,14 @@ export default (env, { mode }, dev = mode === "development") => ({
       Buffer: ["buffer", "Buffer"],
     }),
     // https://webpack.js.org/plugins/copy-webpack-plugin/
-    // new (require("copy-webpack-plugin"))({
-    //   patterns: [
-    //     { from: require.resolve("./src/manifest.json"),       },
-    //   ],
-    // }),
+    new (require("copy-webpack-plugin"))({
+      patterns: [
+        {
+          context: path.resolve(__dirname, "src/assets"),
+          from: "api/**/*.json",
+        },
+      ],
+    }),
     // https://github.com/jantimon/favicons-webpack-plugin#basic
     new (require("favicons-webpack-plugin"))({
       logo: require.resolve("./src/assets/favicon.ico"),
