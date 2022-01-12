@@ -1,5 +1,4 @@
 import React, { useMemo } from "react";
-import { format } from "date-fns";
 import { createAsset } from "use-asset";
 import Chart from "./Chart";
 import styles from "./styles.module.scss";
