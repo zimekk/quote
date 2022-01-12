@@ -1,3 +1,13 @@
 .Section {
   color: blue;
+
+  h3 {
+    img {
+      width: 24px;
+      height: 24px;
+      & + span {
+        margin-left: 1em;
+      }
+    }
+  }
 }

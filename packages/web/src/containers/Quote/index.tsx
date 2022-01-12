@@ -10,9 +10,14 @@ const asset = createAsset(async () => {
 });
 
 function Rates({ symbol, rates }) {
+  const [{ logo_url }] = rates;
+
   return (
     <div>
-      <h2>{symbol}</h2>
+      <h3>
+        <img alt={symbol} src={logo_url} />
+        <span>{symbol}</span>
+      </h3>
       <Chart list={rates} />
     </div>
   );
