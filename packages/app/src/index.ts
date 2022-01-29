@@ -1,10 +1,31 @@
+import fetch from "isomorphic-fetch";
 import path from "path";
 import express, { Router } from "express";
 import { quote } from "@dev/api";
 
 export const router = Router()
   .use("/api/quote.json", (_req, res) =>
-    quote.find({}).then((results) => res.json({ results }))
+    Promise.all([
+      quote.find({}),
+      fetch(
+        "https://www.jubi.plus/api/quote/v1/klines?symbol=301.SOL2USDT&interval=15m&from=1641946502000&to=1641956399000&limit=200"
+      ).then((res) => res.json()),
+    ]).then(([results, { code, data }]) =>
+      res.json({
+        code,
+        data,
+        results: results.concat(
+          data.map(({ t, s, o }) =>
+            ((i) => ({
+              id: `${s}@${i}`,
+              price: o,
+              price_timestamp: i,
+              symbol: s,
+            }))(new Date(t).toISOString())
+          )
+        ),
+      })
+    )
   )
   .use(require("./push").default());
 

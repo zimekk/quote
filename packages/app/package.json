@@ -29,6 +29,7 @@
     "cors": "^2.8.5",
     "dotenv": "^14.3.2",
     "express": "^4.17.2",
+    "isomorphic-fetch": "^3.0.0",
     "morgan": "^1.10.0",
     "rxjs": "^7.5.2",
     "web-push": "^3.4.5"
