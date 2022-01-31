@@ -1,6 +1,7 @@
 import fetch from "isomorphic-fetch";
 import path from "path";
 import express, { Router } from "express";
+import { z } from "zod";
 import { quote } from "@dev/api";
 
 export const router = Router()
@@ -9,12 +10,30 @@ export const router = Router()
       quote.find({}),
       fetch(
         "https://www.jubi.plus/api/quote/v1/klines?symbol=301.SOL2USDT&interval=15m&from=1641946502000&to=1641956399000&limit=200"
-      ).then((res) => res.json()),
-    ]).then(([results, { code, data }]) =>
-      res.json({
-        code,
-        data,
-        results: results.concat(
+      )
+        .then((res) => res.json())
+        .then((body) =>
+          z
+            .object({
+              code: z.number(),
+              data: z.array(
+                z
+                  .object({
+                    t: z.number(),
+                    s: z.string(),
+                    sn: z.string(),
+                    c: z.string(),
+                    h: z.string(),
+                    l: z.string(),
+                    o: z.string(),
+                    v: z.string(),
+                  })
+                  .strict()
+              ),
+            })
+            .parse(body)
+        )
+        .then(({ data }) =>
           data.map(({ t, s, o }) =>
             ((i) => ({
               id: `${s}@${i}`,
@@ -24,6 +43,46 @@ export const router = Router()
             }))(new Date(t).toISOString())
           )
         ),
+      fetch("https://bittrex.com/api/v1.1/public/getmarketsummaries")
+        .then((res) => res.json())
+        .then((body) =>
+          z
+            .object({
+              success: z.boolean(),
+              message: z.string(),
+              result: z.array(
+                z
+                  .object({
+                    MarketName: z.string(),
+                    High: z.number(),
+                    Low: z.number(),
+                    Volume: z.number(),
+                    Last: z.number(),
+                    BaseVolume: z.number(),
+                    TimeStamp: z.string(),
+                    Bid: z.number(),
+                    Ask: z.number(),
+                    OpenBuyOrders: z.number(),
+                    OpenSellOrders: z.number(),
+                    PrevDay: z.number(),
+                    Created: z.string(),
+                  })
+                  .strict()
+              ),
+            })
+            .parse(body)
+        )
+        .then(({ result }) =>
+          result.map(({ MarketName, TimeStamp, Last }) => ({
+            id: `${MarketName}@${TimeStamp}`,
+            price: Last,
+            price_timestamp: TimeStamp,
+            symbol: MarketName,
+          }))
+        ),
+    ]).then((sources) =>
+      res.json({
+        results: [].concat(...sources),
       })
     )
   )
