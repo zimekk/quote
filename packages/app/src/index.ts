@@ -5,11 +5,45 @@ import { z } from "zod";
 import { quote } from "@dev/api";
 
 export const router = Router()
+  .use("/api/rates.json", (_req, res) =>
+    fetch("https://www.jubi.plus/api/quote/v1/rates", {
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      // "body": "tokens=USDT,BTC,ETH,1INCH,1SOL,A5T,AAC,AAT,AAVE,ABBKS1,ACA,ADA,ADD1,AEGIS,AGLD1,ALD1,ALGO,ALICE,ANC1,ANT2,ANY,API31,AR1,ARMOR1,ARPA,ASKO,ASTR,ATLAS1,ATOM,AUCTION,AUDIO1,AURORA,AVALANCHE,AVN,AXS1,BACK1,BADGER1,BAL,BALPHA1,BAND,BCH,BCHA,BDP1,BEE1,BELT1,BEP20-IMT,BF,BHD,BIT,BKY,BMBC,BNB,BOBA1,BONE1,BOSON1,BSV,BTM,BTRST1,BUNNY1,BXH1,BZZ2,CAKE1,CELT,CERE,CFX1,CHE1,CLOVER42,CLV2,COMBO1,COMP,COVER2,COW1,CQT1,CRO1,CRV,CSPR1,DAFI1,DAI1,DAO,DASH,DDX1,DEP1,DESO,DHEDGE,DIA,DMG,DNA1,DODO1,DOGE,DOP1,DORA1,DYDX1,ELA,ELASTOS,ELROND,ENJ1,ENS,EOS,ETC,ETD1,ETHA1,ETHV2,FANSCOIN,FEI-HECO,FEI1,FILECOIN,FILESTAR,FINDORA,FLM1,FM,FORTH1,FOX,FRONTIER,FTM,FTT1,FXS1,GALA,GARI,GFI2,GLMR,GODS,GOF,GOG,GRAPH,GTC1,GXCHAIN,HADES,HBC,HCT2,HEGIC1,HFI1,HGT1,HIVE1,HOPR,HT,HUSD,ICP1,IDEX,IMX,INV,JASMY1,JBX1,JC,JENNY1,JF,JFI,JGN1,JOE1,JST,JT,JUSD,KAVA1,KCASH,KEEP,KEEP3RV1,KILT,KIMCHI1,KINE,KLP,KNC1,KONO1,KSM,KTON1,LAT2,LAVA1,LEASH1,LHB1,LIEN1,LINK,LOOKS,LOON,LPT2,LQTY,LTC,LUNA,MANA1,MAPS1,MASK1,MATH,MATIC1,MATTER1,MCB,MDX-HECO,MEER1,METAX,METIS1,MINA1,MIRROR,MKR,MONO,MTA,MVP1,MW1,MX,MXC,NCT1,NEAR-NEW,NEO,NEST,NFT2,NT2,NU,OCEAN3,OCT,OGN,OHM,OINFINANCE,OKB,OKS,OMG1,ONE2,ONT,OOE1,OOKI,OVR1,OXD,PAMP,PDEX1,PEOPLE,PERP1,PHX,PICKLE1,PIG,PLA1,PNEO,PNK,POLKADOT,POLS1,POND1,POT,PUSH,QI,QRDO,QTUM,RACA,RADAR,RAIN,RARI1,RAY1,RAZOR1,REN,RING,RLY1,ROCKI1,RON1,ROSE2,RUFF1,SAFE,SAFEMOON,SAKE1,SAND,SFG1,SHFT2,SHIB1,SIPHER,SKL2,SMARS3,SMP,SNX1,SOL2,SOS,SPELL,SQUID,SRM,STAFI,STORJ1,STOS1,SUN2,SUPER2,SUSHI1,SWFTC,TAI,THG,TIDAL1,TIMER1,TOKENLON,TOWN,TPT2,TRAC,TRIBE-HECO,TRIBE1,TRU1,TRX,TVK1,TWT1,UIP2,UNFI,UNI,UNITRADE,UP,USDC,USDT-AVAX-C,VALUE1,VEE,VP,WEVE,WOO1,XAS,XAVA1,XCH2,XEC,XEND1,XLM2,XOR,XRP,XRT1,XTZ,XVS1,XYO,YAMV3,YFI,YFII,YGG,ZEC,ZEN1,ZKS1,BTC,USDT&legalCoins=BTC,USDT,USD",
+      body: "tokens=BTC,USDT,ATOM&legalCoins=BTC,USDT,USD",
+      method: "POST",
+    })
+      .then((res) => res.json())
+      .then((body) =>
+        z
+          .object({
+            code: z.number(),
+            data: z.array(
+              z
+                .object({
+                  token: z.string(),
+                  rates: z.record(z.string(), z.string()),
+                })
+                .strict()
+            ),
+          })
+          .parse(body)
+      )
+      .then(({ data }) =>
+        res.json({
+          data,
+        })
+      )
+  )
   .use("/api/quote.json", (_req, res) =>
     Promise.all([
       quote.find({}),
       fetch(
-        "https://www.jubi.plus/api/quote/v1/klines?symbol=301.SOL2USDT&interval=15m&from=1641946502000&to=1641956399000&limit=200"
+        ((to) =>
+          `https://www.jubi.plus/api/quote/v1/klines?symbol=301.ATOMUSDT&interval=1m&from=${
+            to - 60 * 1000
+          }&to=${to}&limit=200`)(Math.round(Date.now() / 1000) * 1000)
       )
         .then((res) => res.json())
         .then((body) =>
@@ -43,43 +77,43 @@ export const router = Router()
             }))(new Date(t).toISOString())
           )
         ),
-      fetch("https://bittrex.com/api/v1.1/public/getmarketsummaries")
-        .then((res) => res.json())
-        .then((body) =>
-          z
-            .object({
-              success: z.boolean(),
-              message: z.string(),
-              result: z.array(
-                z
-                  .object({
-                    MarketName: z.string(),
-                    High: z.number(),
-                    Low: z.number(),
-                    Volume: z.number(),
-                    Last: z.number(),
-                    BaseVolume: z.number(),
-                    TimeStamp: z.string(),
-                    Bid: z.number(),
-                    Ask: z.number(),
-                    OpenBuyOrders: z.number(),
-                    OpenSellOrders: z.number(),
-                    PrevDay: z.number(),
-                    Created: z.string(),
-                  })
-                  .strict()
-              ),
-            })
-            .parse(body)
-        )
-        .then(({ result }) =>
-          result.map(({ MarketName, TimeStamp, Last }) => ({
-            id: `${MarketName}@${TimeStamp}`,
-            price: Last,
-            price_timestamp: TimeStamp,
-            symbol: MarketName,
-          }))
-        ),
+      // fetch("https://bittrex.com/api/v1.1/public/getmarketsummaries")
+      //   .then((res) => res.json())
+      //   .then((body) =>
+      //     z
+      //       .object({
+      //         success: z.boolean(),
+      //         message: z.string(),
+      //         result: z.array(
+      //           z
+      //             .object({
+      //               MarketName: z.string(),
+      //               High: z.number(),
+      //               Low: z.number(),
+      //               Volume: z.number(),
+      //               Last: z.number(),
+      //               BaseVolume: z.number(),
+      //               TimeStamp: z.string(),
+      //               Bid: z.number(),
+      //               Ask: z.number(),
+      //               OpenBuyOrders: z.number(),
+      //               OpenSellOrders: z.number(),
+      //               PrevDay: z.number(),
+      //               Created: z.string(),
+      //             })
+      //             .strict()
+      //         ),
+      //       })
+      //       .parse(body)
+      //   )
+      //   .then(({ result }) =>
+      //     result.map(({ MarketName, TimeStamp, Last }) => ({
+      //       id: `${MarketName}@${TimeStamp}`,
+      //       price: Last,
+      //       price_timestamp: TimeStamp,
+      //       symbol: MarketName,
+      //     }))
+      //   ),
     ]).then((sources) =>
       res.json({
         results: [].concat(...sources),

@@ -1,4 +1,6 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { Subject, from } from "rxjs";
+import { debounceTime, mergeMap, tap } from "rxjs/operators";
 import { createAsset } from "use-asset";
 import Chart from "./Chart";
 import styles from "./styles.module.scss";
@@ -14,7 +16,7 @@ function Rates({ symbol, rates }) {
   return (
     <div>
       <h3>
-        <img alt={symbol} src={logo_url} />
+        {logo_url && <img alt={symbol} src={logo_url} />}
         <span>{symbol}</span>
       </h3>
       <Chart list={rates} />
@@ -24,17 +26,55 @@ function Rates({ symbol, rates }) {
 
 export default function Section() {
   const { results } = asset.read();
+  const [rates, setRates] = useState(() => results);
+
+  const search$ = useMemo(() => new Subject<any>(), []);
+
+  useEffect(() => {
+    const subscription = search$
+      .pipe(
+        mergeMap(() => {
+          return from(
+            fetch(`api/rates.json`)
+              .then((res) => res.json())
+              .then(({ data }) => {
+                const legal = "USDT";
+                const result = data.reduce(
+                  (result, { rates, token }) =>
+                    Object.assign(result, {
+                      [token]: ((price_timestamp, symbol) => ({
+                        id: `${symbol}@${price_timestamp}`,
+                        price: rates[legal],
+                        price_timestamp,
+                        symbol,
+                      }))(new Date().toISOString(), `${token}${legal}`),
+                    }),
+                  {}
+                );
+                setRates((rates) => rates.concat(result["ATOM"]));
+              })
+          );
+        }),
+        debounceTime(15 * 1000)
+      )
+      .subscribe((filters) => search$.next({}));
+    return () => subscription.unsubscribe();
+  }, [search$]);
+
+  useEffect(() => {
+    search$.next({});
+  }, []);
 
   const list = useMemo(
     () =>
-      results.reduce(
+      rates.reduce(
         (result, item) =>
           Object.assign(result, {
             [item.symbol]: (result[item.symbol] || []).concat(item),
           }),
         {}
       ),
-    [results]
+    [rates]
   );
 
   console.log({ list });
@@ -45,7 +85,7 @@ export default function Section() {
       {Object.entries(list).map(([symbol, rates]) => (
         <Rates key={symbol} symbol={symbol} rates={rates} />
       ))}
-      <pre>{JSON.stringify(results, null, 2)}</pre>
+      <pre>{JSON.stringify(list["ATOMUSDT"], null, 2)}</pre>
     </section>
   );
 }
