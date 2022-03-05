@@ -1,4 +1,6 @@
+.env
 .git
 lib
 node_modules
 public
+temp

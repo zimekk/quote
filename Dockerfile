@@ -1,13 +1,18 @@
 FROM node:12-alpine
 
 ENV WORKDIR=/app
-
 WORKDIR $WORKDIR
 
-COPY . ./
+COPY package.json tsconfig.json yarn.lock ./
+COPY packages/api/package.json packages/api/
+COPY packages/app/package.json packages/app/
+COPY packages/cli/package.json packages/cli/
+COPY packages/web/package.json packages/web/
+RUN yarn --frozen-lockfile
 
-RUN yarn && yarn build
+COPY packages/ packages/
+RUN yarn build
 
-EXPOSE 3000 4000
-
+ENV PORT 8080
+EXPOSE $PORT
 CMD ["yarn", "serve"]

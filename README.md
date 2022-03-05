@@ -36,6 +36,21 @@ docker-compose up --build # app_1  | ⚡️[server]: Server is running at http:/
 curl http://localhost:8080 # <!DOCTYPE html>
 ```
 
+## pulumi
+
+```sh
+pulumi login --local
+pulumi stack init quote
+pulumi new -f typescript
+```
+
+```sh
+pulumi up
+pulumi stack
+pulumi stack --show-urns
+pulumi state delete urn:pulumi:...
+```
+
 ## hooks
 
 ```sh
