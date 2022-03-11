@@ -5,7 +5,7 @@
 // import cx from "classnames";
 // import styles from "./Chart.module.scss";
 
-import React, { PureComponent } from "react";
+import React, { useState } from "react";
 import {
   Label,
   LineChart,
@@ -17,6 +17,7 @@ import {
   ReferenceArea,
   ResponsiveContainer,
 } from "recharts";
+import { format } from "date-fns";
 
 const initialData = [
   { name: 1, cost: 4.11, impression: 100 },
@@ -52,82 +53,81 @@ const getAxisYDomain = (from, to, ref, offset) => {
   return [(bottom | 0) - offset, (top | 0) + offset];
 };
 
-const initialState = {
-  data: initialData,
-  left: "dataMin",
-  right: "dataMax",
-  refAreaLeft: "",
-  refAreaRight: "",
-  top: "dataMax+1",
-  bottom: "dataMin-1",
-  top2: "dataMax+20",
-  bottom2: "dataMin-20",
-  animation: true,
+const ChartTooltip = ({ active, payload }) => {
+  if (active) {
+    const currData = payload && payload.length ? payload[0].payload : null;
+    return (
+      <div>
+        <p>
+          {currData ? format(new Date(currData.date), "yyyy-MM-dd") : " -- "}
+        </p>
+        <p>
+          {"price : "}
+          <em>{currData ? currData.price : " -- "}</em>
+        </p>
+      </div>
+    );
+  }
+
+  return null;
 };
 
-export default class Example extends PureComponent {
-  static demoUrl = "https://codesandbox.io/s/highlight-zomm-line-chart-v77bt";
+export default function Chart({ list }) {
+  // zoom() {
+  //   let { refAreaLeft, refAreaRight } = this.state;
+  //   const { data } = this.state;
 
-  constructor(props) {
-    super(props);
-    this.state = initialState;
-  }
+  //   if (refAreaLeft === refAreaRight || refAreaRight === "") {
+  //     this.setState(() => ({
+  //       refAreaLeft: "",
+  //       refAreaRight: "",
+  //     }));
+  //     return;
+  //   }
 
-  zoom() {
-    let { refAreaLeft, refAreaRight } = this.state;
-    const { data } = this.state;
+  //   // xAxis domain
+  //   if (refAreaLeft > refAreaRight)
+  //     [refAreaLeft, refAreaRight] = [refAreaRight, refAreaLeft];
 
-    if (refAreaLeft === refAreaRight || refAreaRight === "") {
-      this.setState(() => ({
-        refAreaLeft: "",
-        refAreaRight: "",
-      }));
-      return;
-    }
+  //   // yAxis domain
+  //   const [bottom, top] = getAxisYDomain(refAreaLeft, refAreaRight, "cost", 1);
+  //   const [bottom2, top2] = getAxisYDomain(
+  //     refAreaLeft,
+  //     refAreaRight,
+  //     "impression",
+  //     50
+  //   );
 
-    // xAxis domain
-    if (refAreaLeft > refAreaRight)
-      [refAreaLeft, refAreaRight] = [refAreaRight, refAreaLeft];
+  //   this.setState(() => ({
+  //     refAreaLeft: "",
+  //     refAreaRight: "",
+  //     data: data.slice(),
+  //     left: refAreaLeft,
+  //     right: refAreaRight,
+  //     bottom,
+  //     top,
+  //     bottom2,
+  //     top2,
+  //   }));
+  // }
 
-    // yAxis domain
-    const [bottom, top] = getAxisYDomain(refAreaLeft, refAreaRight, "cost", 1);
-    const [bottom2, top2] = getAxisYDomain(
-      refAreaLeft,
-      refAreaRight,
-      "impression",
-      50
-    );
-
-    this.setState(() => ({
-      refAreaLeft: "",
-      refAreaRight: "",
-      data: data.slice(),
-      left: refAreaLeft,
-      right: refAreaRight,
-      bottom,
-      top,
-      bottom2,
-      top2,
-    }));
-  }
-
-  zoomOut() {
-    const { data } = this.state;
-    this.setState(() => ({
-      data: data.slice(),
-      refAreaLeft: "",
-      refAreaRight: "",
-      left: "dataMin",
-      right: "dataMax",
-      top: "dataMax+1",
-      bottom: "dataMin",
-      top2: "dataMax+50",
-      bottom2: "dataMin+50",
-    }));
-  }
-
-  render() {
-    const {
+  // zoomOut() {
+  //   const { data } = this.state;
+  //   this.setState(() => ({
+  //     data: data.slice(),
+  //     refAreaLeft: "",
+  //     refAreaRight: "",
+  //     left: "dataMin",
+  //     right: "dataMax",
+  //     top: "dataMax+1",
+  //     bottom: "dataMin",
+  //     top2: "dataMax+50",
+  //     bottom2: "dataMin+50",
+  //   }));
+  // }
+  console.log({ list });
+  const [
+    {
       data,
       barIndex,
       left,
@@ -138,81 +138,98 @@ export default class Example extends PureComponent {
       bottom,
       top2,
       bottom2,
-    } = this.state;
+    },
+    setState,
+  ] = useState(() => ({
+    data: list.map((item) => ({
+      ...item,
+      date: new Date(item.price_timestamp).getTime(),
+    })),
+    left: "dataMin",
+    right: "dataMax",
+    refAreaLeft: "",
+    refAreaRight: "",
+    top: "dataMax+1",
+    bottom: "dataMin-1",
+    top2: "dataMax+20",
+    bottom2: "dataMin-20",
+    animation: true,
+  }));
 
-    return (
-      <div
-        className="highlight-bar-charts"
-        style={{ userSelect: "none", width: "100%" }}
+  return (
+    <div
+      className="highlight-bar-charts"
+      style={{ userSelect: "none", width: "100%" }}
+    >
+      <button
+        type="button"
+        className="btn update"
+        // onClick={this.zoomOut.bind(this)}
       >
-        <button
-          type="button"
-          className="btn update"
-          onClick={this.zoomOut.bind(this)}
-        >
-          Zoom Out
-        </button>
+        Zoom Out
+      </button>
 
-        <ResponsiveContainer width="100%" height={400}>
-          <LineChart
-            width={800}
-            height={400}
-            data={data}
-            onMouseDown={(e) => this.setState({ refAreaLeft: e.activeLabel })}
-            onMouseMove={(e) =>
-              this.state.refAreaLeft &&
-              this.setState({ refAreaRight: e.activeLabel })
-            }
-            // eslint-disable-next-line react/jsx-no-bind
-            onMouseUp={this.zoom.bind(this)}
-          >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis
-              allowDataOverflow
-              dataKey="name"
-              domain={[left, right]}
-              type="number"
-            />
-            <YAxis
-              allowDataOverflow
-              domain={[bottom, top]}
-              type="number"
-              yAxisId="1"
-            />
-            <YAxis
+      <ResponsiveContainer width="100%" height={400}>
+        <LineChart
+          width={800}
+          height={400}
+          data={data}
+          onMouseDown={(e) => setState({ refAreaLeft: e.activeLabel })}
+          onMouseMove={(e) =>
+            refAreaLeft && setState({ refAreaRight: e.activeLabel })
+          }
+          // onMouseUp={this.zoom.bind(this)}
+        >
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis
+            allowDataOverflow
+            dataKey="date"
+            domain={[left, right]}
+            type="number"
+            tickFormatter={(date) => format(date, "yyyy-MM-dd")}
+          />
+          <YAxis
+            allowDataOverflow
+            domain={[bottom, top]}
+            type="number"
+            yAxisId="1"
+          />
+          {/* <YAxis
               orientation="right"
               allowDataOverflow
               domain={[bottom2, top2]}
               type="number"
               yAxisId="2"
-            />
-            <Tooltip />
-            <Line
-              yAxisId="1"
-              type="natural"
-              dataKey="cost"
-              stroke="#8884d8"
-              animationDuration={300}
-            />
-            <Line
+            /> */}
+          {/* <Tooltip content={<ChartTooltip/>}/> */}
+          <Tooltip
+            labelFormatter={(date) => format(date, "yyyy-MM-dd")}
+            formatter={(price) => price}
+          />
+          <Line
+            yAxisId="1"
+            type="natural"
+            dataKey="price"
+            stroke="#8884d8"
+            animationDuration={300}
+          />
+          {/* <Line
               yAxisId="2"
               type="natural"
               dataKey="impression"
               stroke="#82ca9d"
               animationDuration={300}
+            /> */}
+          {refAreaLeft && refAreaRight ? (
+            <ReferenceArea
+              yAxisId="1"
+              x1={refAreaLeft}
+              // x2={refAreaRight}
+              strokeOpacity={0.3}
             />
-
-            {refAreaLeft && refAreaRight ? (
-              <ReferenceArea
-                yAxisId="1"
-                x1={refAreaLeft}
-                x2={refAreaRight}
-                strokeOpacity={0.3}
-              />
-            ) : null}
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-    );
-  }
+          ) : null}
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
 }
