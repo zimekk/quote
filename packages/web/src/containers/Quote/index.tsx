@@ -3,6 +3,7 @@ import { Subject, from } from "rxjs";
 import { debounceTime, mergeMap, tap } from "rxjs/operators";
 import { createAsset } from "use-asset";
 import Chart from "./Chart";
+import Chart2 from "./Chart2";
 import styles from "./styles.module.scss";
 
 const asset = createAsset(async () => {
@@ -20,6 +21,7 @@ function Rates({ symbol, rates }) {
         <span>{symbol}</span>
       </h3>
       <Chart list={rates} />
+      <Chart2 list={rates} />
     </div>
   );
 }
