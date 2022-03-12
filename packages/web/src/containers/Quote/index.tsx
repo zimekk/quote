@@ -10,6 +10,38 @@ const asset = createAsset(async () => {
   return await res.json();
 });
 
+const ERA = 24 * 3600 * 1000;
+const prepareData = (list) => {
+  const data = Object.entries(list).reduce(
+    (data, [symbol, values]) =>
+      values
+        .map(({ price_timestamp, price }) => ({
+          x: Math.round(new Date(price_timestamp).getTime() / ERA) * ERA,
+          y: Number(price),
+        }))
+        .reduce(
+          (data, { x, y }) =>
+            Object.assign(data, {
+              [x]: Object.assign(
+                {
+                  [symbol]: y,
+                },
+                data[x]
+              ),
+            }),
+          data
+        ),
+    {}
+  );
+
+  return {
+    labels: Object.keys(list),
+    values: Object.entries(data)
+      .sort(([a], [b]) => a - b)
+      .map(([x, item]) => ({ x: Number(x), ...item })),
+  };
+};
+
 function Rates({ symbol, rates }) {
   const [{ logo_url }] = rates;
 
@@ -19,7 +51,14 @@ function Rates({ symbol, rates }) {
         {logo_url && <img alt={symbol} src={logo_url} />}
         <span>{symbol}</span>
       </h3>
-      <Chart list={rates} />
+      <Chart
+        data={prepareData({
+          [symbol]: rates.map(({ price, price_timestamp }) => ({
+            price_timestamp,
+            price,
+          })),
+        })}
+      />
     </div>
   );
 }
@@ -82,6 +121,7 @@ export default function Section() {
   return (
     <section className={styles.Section}>
       <h2>Quote</h2>
+      <Chart data={prepareData(list)} />
       {Object.entries(list).map(([symbol, rates]) => (
         <Rates key={symbol} symbol={symbol} rates={rates} />
       ))}
